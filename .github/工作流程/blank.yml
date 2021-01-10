@@ -1,0 +1,120 @@
+＃
+＃这是免费软件，可以使用MIT来使用。
+＃ 
+＃版权所有（C）2019 Jolly <https://totoro.site>
+＃ 
+＃ <https://github.com/skytotwo/NanoPi-R1S-Build-By-Actions>
+＃
+＃作者乔利2019/12/7
+＃最后更新于2019/12/19
+
+名称：NanoPi-R1s H5 OpenWrt 19.07 Build
+
+在：
+  推送：
+    分行：
+      -大师
+  ＃时间表：
+  ＃    -cron：0 20 * * *
+  ＃发布：
+  ＃   类型：[已发布]
+
+职位：
+
+  建立：
+
+    运行：ubuntu-latest
+
+    步骤：
+
+      -名称：结帐
+        用途：actions / checkout @ master
+        与：
+          参考：大师
+
+      -名称：初始化环境
+        env：
+          DEBIAN_FRONTEND：非互动
+        运行：|
+          wget -O-https://raw.githubusercontent.com/friendlyarm/build-env-on-ubuntu-bionic/master/install.sh | 重击         
+          
+      -名称：安装仓库
+        运行：|
+          git clone https://github.com/friendlyarm/repo
+          须藤cp回购/回购/ usr / bin /
+          
+      -名称：下载源
+        运行：|
+          mkdir friendlywrt-h5
+          cd friendlywrt-h5
+          回购init -u https://github.com/friendlyarm/friendlywrt_manifests -b master -m h5.xml --repo-url = https：//github.com/friendlyarm/repo --no-clone-bundle
+      
+      -名称：合并UpStearm OpenWrt
+        运行：|
+          cd friendlywrt-h5
+          cd .repo /清单
+          rm -f ./h5.xml
+          wget https://raw.githubusercontent.com/skytotwo/NanoPi-R1S-Build-By-Actions/master/source_xml/h5_19.07.xml
+          cp h5_19.07.xml h5.xml
+          rm -rf ./h5_19.07.xml
+          回购同步-c --no-clone-bundle
+      
+      -名称：合并LEDE
+        运行：|
+          cd friendlywrt-h5
+          git clone https://github.com/coolsnowwolf/lede
+          光盘友好
+          cp -r ../lede/package/lean package /
+          sed -i's / https：\ / \ / git.openwrt.org \ / project \ /luci.git^039ef1f4deba725d3591b159bbc9569885d68131/https：\ / \ / github.com \ / coolsnowwolf \ / luci /'feeds.conf.default
+          sed -i's / https：\ / \ / git.openwrt.org \ / feed \ /packages.git^00803ffc91e80b16e9c1603ff32106d42e255923/https：\ / \ / github.com \ / coolsnowwolf \ / packages /'feeds.conf.default          
+      
+      -名称：自定义应用
+        运行：|
+          cd friendlywrt-h5 / friendlywrt / package
+          git clone https://github.com/Baozisoftware/luci-app-koolproxy
+          
+      -名称：更新Target.mk
+        运行：|
+          cd friendlywrt-h5 / friendlywrt / include 
+          sed -i's / dnsmasq / dnsmasq-完整的默认设置luci /'target.mk    
+          
+      -名称：更新供稿
+        运行：|
+          cd friendlywrt-h5 / friendlywrt
+          ./scripts/feeds更新-a
+          ./scripts/feeds install -a
+          
+      -名称：Costom配置文件
+        运行：|
+          cd friendlywrt-h5 / friendlywrt
+          rm -f ./.config*
+          wget https://raw.githubusercontent.com/skytotwo/NanoPi-R1S-Build-By-Actions/master/r1s-h5-config
+          cp r1s-h5-config .config
+      
+      -名称：下载包
+        如果：always（）
+        运行：|
+          cd friendlywrt-h5 / friendlywrt
+          进行下载-j8
+          找到dl -size -1024c -exec ls -l {} \;
+          找到dl -size -1024c -exec rm -f {} \;
+          
+      -名称：构建OpenWrt
+        运行：|
+          cd friendlywrt-h5
+          ./build.sh nanopi_r1s.mk
+      
+      -名称：Zip文件
+        运行：|
+          找到friendlywrt-h5 / out / -name“ FriendlyWrt_ * img *” | xargs -i zip -r {} .zip {}
+          
+      -名称：组装神器
+        运行：|
+          rm -rf ./artifact/
+          mkdir -p ./工件/
+          找到friendlywrt-h5 / out / -name“ FriendlyWrt_ * img.zip *” | xargs -i mv -f {} ./artifact/
+      -名称：上传工件
+        用途：actions / upload-artifact @ master
+        与：
+          名称：FriendlyWrt_NanoPi-R1S H5 v19.07
+          路径：./ artifact /
